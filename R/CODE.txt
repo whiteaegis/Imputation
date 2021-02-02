@@ -1,0 +1,82 @@
+data<-read.delim(file.choose(),header=T)
+library(doParallel)
+
+zz = as.matrix(data[,12:ncol(data)])
+dim(zz)
+ac<-c()
+atime<-c()
+tt<-c()
+qq<-c()
+ee<-c()
+cl <- makeCluster(3)
+registerDoParallel(cl)
+for(jj in 1:10)
+{
+row<-sample(1:1390, size=10000,replace=T)
+col<-sample(1:353, size=10000,replace=T)
+tt<-cbind(row,col)
+qq<-rbind(qq,tt)
+ww<-zz[qq]
+sum(ww=="N")
+zz[qq]<-c("N")
+y<-zz
+
+time=Sys.time()
+w=20 #window size
+k=5 #k for KNN algorithm
+n.step=floor(nrow(y)/w)
+
+final=c()
+for(L in 1:n.step){
+  if (L <= (n.step-1)){
+   x=y[(w*(L-1)+1):(w*L),]
+  } else{
+   x=y[(w*(L-1)+1):nrow(y),]
+  } 
+  x.impute<-foreach(i=1:nrow(x),.combine=rbind) %dopar% {
+##
+     library(phangorn)
+     N.id = which(x[i,]=="N")
+     x.new = x[i, -N.id]
+     if (length(N.id) > 0){
+     for (j in 1:length(N.id)){
+        x.target=x[-i, N.id[j]]
+        x.train=x[-i, -N.id]
+##----------
+        s=apply(x.train,2,function(x){score.f(x.target,x)})
+        ss=sort(s,decreasing=TRUE,index.return=TRUE)
+#############
+        #temp=cbind(x.target, x.train)
+        #new=phyDat(t(temp))
+        #nn <- dist.hamming(new)
+        #nn<-as.matrix(as.dist(nn))
+        #ss=sort(nn[1,-1],decreasing=FALSE,index.return=TRUE)
+        #x.tab=table(as.character(x.new[ss$ix[1:k]]))
+        #genotype=row.names(x.tab)
+        #x[i, N.id[j]]=genotype[which.max(x.tab)]
+################
+        x.tab=table(as.character(x.new[ss$ix[1:k]]))
+        genotype=row.names(x.tab)
+        x[i, N.id[j]]=genotype[which.max(x.tab)]
+##---------
+     }}
+     x[i,]
+  }
+  final = rbind(final,x.impute)
+}
+#----------------------------
+
+kk<-sum(final[qq]==ww)/sum(zz=="N")
+ee<-cbind(ee,kk)
+time.con=Sys.time()-time
+atime<-cbind(atime,time.con)
+aa<-sum(zz=="N")/length(zz)
+ac = cbind(ac,aa)
+
+}
+stopCluster(cl)
+
+result<-rbind(ac,ee,atime)
+colnames(result)<-c(1:10)
+rownames(result)<-c("N-rate","accurate","time")
+result

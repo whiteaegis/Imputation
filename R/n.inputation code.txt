@@ -1,0 +1,606 @@
+
+######珼Τ礚N
+rm(list=ls())
+
+data<-read.delim(file.choose(),header=T)
+data1<-as.matrix(data[,5:ncol(data)])
+rownames(data1)<-as.matrix(data[,1])
+new.data<-c()
+for(i in 1:nrow(data1)){
+count<-sum(data1[i,]=="N")
+	if(count==0)
+	{
+       new.data<-rbind(new.data,data[i,])
+	}
+}
+####DNA distance#####
+new.data<-new.data[,5:ncol(new.data)]
+
+dim(new.data.t)
+
+install.packages("gee")
+install.packages("ape")
+install.packages("igraph")
+install.packages("quadprog")
+install.packages("phangorn")
+
+library(phangorn)
+
+x<-phyDat(t(new.data))
+
+dm1 <- dist.hamming(x)
+fix(dm1)
+tree1 <- NJ(dm1)
+dm2 <- dist.logDet(x)
+tree2 <- NJ(dm2)
+treedist(tree1,tree2)
+
+
+plot(tree1)
+##秨﹍稱猭(ぃ︽)
+
+rm(list=ls())
+
+data<-read.delim(file.choose(),header=T)
+data1<-as.matrix(data[,5:ncol(data)])
+
+y=data1
+
+ff=function(x)
+{mm<-c()
+for(i in 1:nrow(x))
+{
+countA<-sum(x[i,]=="A")
+countT<-sum(x[i,]=="T")
+countC<-sum(x[i,]=="C")
+countG<-sum(x[i,]=="G")
+countN<-sum(x[i,]=="N")
+m<-c(countA,countT,countC,countG,countN)/dim(x)[2]
+mm<-rbind(mm,m)
+}
+return(mm)
+}
+
+fg=function(x)
+{mm<-c()
+for(i in 1:nrow(x))
+{
+countA<-sum(x[i,]=="A")
+countT<-sum(x[i,]=="T")
+countC<-sum(x[i,]=="C")
+countG<-sum(x[i,]=="G")
+m<-c(countA,countT,countC,countG)/dim(x)[2]
+mm<-rbind(mm,m)
+}
+return(mm)
+}
+
+colnames(mm)<-c("A","T","C","G")
+
+Sys.time()
+final =c()
+qq=c()
+n=c()
+e=1
+for(L in 1:floor(nrow(y)/20))
+{
+   x=y[(20*L-19):(20*L),]
+   mm = fg(x)
+   colnames(mm)<-c("A","T","C","G")
+   for(i in 1:nrow(mm))
+   {
+   count=sum(mm[i,]==0)
+   if(count!=4)
+   {
+   ss=sort(mm[i,],decreasing=TRUE)[1]
+   d=c()
+   d<-as.matrix(rownames(as.matrix(ss)))
+   rownames(d)<-e
+    }
+   else
+   {
+   d<-as.matrix(c("N"))
+   rownames(d)<-e
+   }
+   n<-rbind(n,d)
+   e<-e+1
+   } 
+}
+x=y[(20*floor(nrow(y)/20)+1):nrow(y),]
+ mm = fg(x)
+   colnames(mm)<-c("A","T","C","G")
+   for(i in 1:nrow(mm))
+   {
+   count=sum(mm[i,]==0)
+   if(count!=4)
+   {
+   ss=sort(mm[i,],decreasing=TRUE)[1]
+   d=c()
+   d<-as.matrix(rownames(as.matrix(ss)))
+   rownames(d)<-e
+   }
+   else
+   {
+   d<-as.matrix(c("N"))
+   rownames(d)<-e
+   }
+   n<-rbind(n,d)
+   e<-e+1
+}
+Sys.time()
+
+dim(n)
+
+
+
+##hammingよ猭
+
+library(phangorn)
+rm(list=ls())
+xx=read.delim(file.choose(),header=T)
+y = as.matrix(xx[,12:ncol(xx)])
+Mode4 <- function(x,s)
+{
+  ss=sort(s,decreasing=FALSE)[5]
+  xx = x[which(s >= ss)]
+  ux = unique(x[!x=="N"])
+  if(length(ux) > 0) return(ux[which.max(tabulate(match(xx, ux)))])
+  else return("N")
+}
+w=20 #window size
+k=5 #k for KNN algorithm
+n.step=floor(nrow(y)/w)
+time<-Sys.time()
+gg<-c()
+for(L in 1:n.step){
+    if (L <= (n.step-1))
+    {
+   x=y[(w*(L-1)+1):(w*L),]
+    } else
+      {
+      x=y[(w*(L-1)+1):nrow(y),]
+       } 
+   n<-phyDat(t(x))
+   nn <- dist.hamming(n)
+   nn<-as.matrix(as.dist(nn))
+   z=x
+   for(i in 1:nrow(x)){
+      to.do.i = which(x[i,]=="N")
+      for (j in to.do.i) {
+         z[i,j] = Mode4(x[i,],nn[j,])
+      }
+   }
+   gg = rbind(gg,z)
+}
+
+Sys.time()-time
+my.snp.heatmap.hamming(gg,TRUE)
+dim(y)
+
+sum(gg=="N")/length(tt)
+
+write.table(gg,file="gg.txt",sep="\t")
+
+
+########accuracy 代刚计沮
+data=read.delim(file.choose(),header=T)
+dim(data)
+#data1<-as.matrix(data)
+zz = as.matrix(data[,12:ncol(data)])
+dim(zz)
+row<-sample(1:1390, size=10000,replace=T)
+col<-sample(1:353, size=10000,replace=T)
+tt<-cbind(row,col)
+tt<-unique(tt)
+ww<-zz[tt]
+sum(ww=="N")
+zz[tt]<-c("N")
+sum(zz=="N")
+sum(final[tt]==ww)/sum(zz=="N")
+
+
+#######代刚禲ΩキА
+data=read.delim(file.choose(),header=T)
+dim(data)
+data1<-as.matrix(data)
+data1 = as.matrix(data[,12:ncol(data)])
+dim(zz)
+#########
+time=Sys.time()
+ee<-c()
+for(jj in 1:10)
+{
+zz<-data1
+tt<-c()
+ww<-c()
+row<-sample(1:1390, size=10000,replace=T)
+col<-sample(1:353, size=10000,replace=T)
+tt<-cbind(row,col)
+ww<-zz[tt]
+sum(ww=="N")
+zz[tt]<-c("N")
+y<-zz
+#------------
+final=c()
+w=20 #window size
+k=5 #k for KNN algorithm
+n.step=floor(nrow(y)/w)
+for(L in 1:n.step){
+  if (L <= (n.step-1)){
+   x=y[(w*(L-1)+1):(w*L),]
+  } else{
+   x=y[(w*(L-1)+1):nrow(y),]
+  } 
+  for(i in 1:nrow(x)){
+     N.id = which(x[i,]=="N")
+     x.new = x[i, -N.id]
+     if (length(N.id) > 0){
+     for (j in 1:length(N.id)){
+        x.target=x[-i, N.id[j]]
+        x.train=x[-i, -N.id]
+        s=apply(x.train,2,function(x){score.f(x.target,x)})
+        ss=sort(s,decreasing=TRUE,index.return=TRUE)
+        x.tab=table(as.character(x.new[ss$ix[1:k]]))
+        genotype=row.names(x.tab)
+        x[i, N.id[j]]=genotype[which.max(x.tab)]
+     }
+    }
+  }
+  final = rbind(final,x)
+}
+#----------
+kk<-sum(final[tt]==ww)/10000
+ee<-cbind(ee,kk)
+}
+
+###代刚10k~100k非絋瞯
+
+y = as.matrix(xx[,12:ncol(xx)])
+
+library(doParallel)
+
+zz = as.matrix(data[,12:ncol(data)])
+dim(zz)
+ac<-c()
+atime<-c()
+tt<-c()
+qq<-c()
+ee<-c()
+cl <- makeCluster(3)
+registerDoParallel(cl)
+for(jj in 1:10)
+{
+zz<-data1
+count=jj*10000
+row<-sample(1:1390, size=count,replace=T)
+col<-sample(1:353, size=count,replace=T)
+tt<-cbind(row,col)
+tt<-unique(tt)
+ww<-zz[tt]
+sum(ww=="N")
+zz[tt]<-c("N")
+y<-zz
+time=Sys.time()
+w=20 #window size
+k=5 #k for KNN algorithm
+n.step=floor(nrow(y)/w)
+final=c()
+for(L in 1:n.step){
+  if (L <= (n.step-1)){
+   x=y[(w*(L-1)+1):(w*L),]
+  } else{
+   x=y[(w*(L-1)+1):nrow(y),]
+  } 
+  x.impute<-foreach(i=1:nrow(x),.combine=rbind) %dopar% {
+     N.id = which(x[i,]=="N")
+     x.new = x[i, -N.id]
+     if (length(N.id) > 0){
+     for (j in 1:length(N.id)){
+        x.target=x[-i, N.id[j]]
+        x.train=x[-i, -N.id]
+        s=apply(x.train,2,function(x){score.f(x.target,x)})
+        ss=sort(s,decreasing=TRUE,index.return=TRUE)
+        x.tab=table(as.character(x.new[ss$ix[1:k]]))
+        genotype=row.names(x.tab)
+        x[i, N.id[j]]=genotype[which.max(x.tab)]
+     }}
+     x[i,]
+  }
+  final = rbind(final,x.impute)
+}
+#----------------------------
+
+kk<-sum(final[tt]==ww)/sum(zz=="N")
+ee<-cbind(ee,kk)
+time.con=Sys.time()-time
+atime<-cbind(atime,time.con)
+aa<-sum(zz=="N")/length(zz)
+ac = cbind(ac,aa)
+}
+
+stopCluster(cl)
+
+result<-rbind(ac,ee,atime)
+colnames(result)<-c(1:10)
+rownames(result)<-c("N-rate","accurate","time")
+result
+
+
+####礶10k~100k非絋瞯v.s.v の戈save
+
+aa<-c()
+for(i in 1:10)
+{
+pp<-(i*10000)/490670
+aa<-cbind(aa,pp)
+}
+
+
+plot(aa,ee,main="tsai-inputation",xlab="N-rate",ylab="accurate",type="b")
+result<-rbind(aa,ee)
+colnames(result)<-c(1:10)
+rownames(result)<-c("N-rate","accurate")
+write.table( result, file = "hamming-input-errorrate.txt", sep = "\t")
+
+###error position
+
+rr<-tt[,2]
+hist(rr[gg[tt]!=ww],main="error position")
+
+####window test
+
+score.f <- function(target,train,match.score=1, miss.score=0.5, mismatch.score=-5){
+ m=length(target)
+ #x.tab=table(target,train)
+ #id.n = (row.names(x.tab)=="N")
+ n.allmiss = sum((train=="N") & (target=="N"))
+ n.match = sum(target==train) - n.allmiss
+ #n.match = sum(diag(x.tab)[!id.n])
+ n.miss = sum(target=="N")+sum(train=="N")- n.allmiss
+ n.mismatch = m - n.match -n.miss
+ score = (match.score*n.match + miss.score*n.miss + mismatch.score*n.mismatch)/m
+ return(score)
+}
+ff=c()
+for(o in 20:100)
+{
+  final=c()
+  y=zz
+  time=Sys.time()
+  w=o #window size
+  k=5 #k for KNN algorithm
+n.step=floor(nrow(y)/w)
+for(L in 1:n.step){
+  if (L <= (n.step-1)){
+   x=y[(w*(L-1)+1):(w*L),]
+  } else{
+   x=y[(w*(L-1)+1):nrow(y),]
+  } 
+  for(i in 1:nrow(x)){
+     N.id = which(x[i,]=="N")
+     x.new = x[i, -N.id]
+     if (length(N.id) > 0){
+     for (j in 1:length(N.id)){
+        x.target=x[-i, N.id[j]]
+        x.train=x[-i, -N.id]
+        s=apply(x.train,2,function(x){score.f(x.target,x)})
+        ss=sort(s,decreasing=TRUE,index.return=TRUE)
+        x.tab=table(as.character(x.new[ss$ix[1:k]]))
+        genotype=row.names(x.tab)
+        x[i, N.id[j]]=genotype[which.max(x.tab)]
+     }
+    }
+  }
+  final = rbind(final,x)
+}
+aa<-sum(final[tt]==ww)/sum(zz=="N")
+ff = cbind(ff,aa)
+}
+Sys.time()-time
+
+###тerror
+table(final[tt[which(final[tt]!=ww,arr.ind = TRUE),]])
+
+###计ㄤΤ(ノ耞ヴk薄猵タ絋耞)
+f<-c("A","A","A","T","N")
+t<-as.matrix(table(f))
+p<-combn(t,2)[,combn(t,2)[1,]==max(t)]
+if(sum(p[2,]<max(t))==dim(p)[2])
+
+
+####irration test
+
+ff=c()
+l<-list()
+im<-c()
+atime<-c()
+y=zz
+for(o in 1:10)
+{
+  final=c()
+  time=Sys.time()
+  w=20 #window size
+  k=5 #k for KNN algorithm
+n.step=floor(nrow(y)/w)
+for(L in 1:n.step){
+  if (L <= (n.step-1)){
+   x=y[(w*(L-1)+1):(w*L),]
+  } else{
+   x=y[(w*(L-1)+1):nrow(y),]
+  } 
+  for(i in 1:nrow(x)){
+     N.id = which(x[i,]=="N")
+     x.new = x[i, ]
+     if (length(N.id) > 0){
+     for (j in 1:length(N.id)){
+        x.target=x[-i, N.id[j]]
+        x.train=x[-i, ]
+        s=apply(x.train,2,function(x){score.f(x.target,x)})
+        ss=sort(s,decreasing=TRUE,index.return=TRUE)
+        x.tab=table(as.character(x.new[ss$ix[1:k]]))
+        genotype=row.names(x.tab)
+        sw<-as.matrix(combn(as.matrix(x.tab),2)[,combn(as.matrix(x.tab),2)[1,]==max(as.matrix(x.tab))])
+        if(sum(sw[2,]<max(t))==dim(sw)[2])
+        {
+        x[i, N.id[j]]=genotype[which.max(x.tab)]
+        }
+        else{x[i, N.id[j]]=c("N")}
+
+     }
+    }
+  }
+  final = rbind(final,x)
+}
+aa<-sum(final[tt]==ww)/sum(zz=="N")
+ff<-cbind(ff,aa)
+mm<-sum(final=="N")
+im<-cbind(im,mm)
+t<-Sys.time()-time
+atime<-cbind(atime,t)
+p<-tt[which(final[tt]!=ww,arr.ind = TRUE),]
+l[[o]] <-p 
+y=final
+}
+result<-rbind(im,ff,atime)
+colnames(result)<-c(1:10)
+rownames(result)<-c("im","accurate","time")
+result
+Sys.time()-time
+
+####ld
+
+change.type<-function(y.1)
+{
+library(popgen)
+y.1[y.1%in%c("K","M","R","S","W","Y","N")]<-c(-1)
+for(i in 1:nrow(y.1))
+{
+x<-y.1[i,]
+t<-x[x!=-1]
+genotype=row.names(table(t))
+if(length(unique(table(t)))==1)
+{
+x[x!=genotype[2] & x!=genotype[1]& x!="-1"]<-"-1"
+x[x==genotype[1]]<-"1"
+x[x==genotype[2]]<-"0"
+}
+else
+{
+x[x!=genotype[which.min(table(t))]& x!=genotype[which.max(table(t))]& x!="-1"]<-"-1"
+x[x==genotype[which.max(table(t))]]<-"1"
+x[x==genotype[which.min(table(t))]]<-"0"
+}
+y.1[i,]<-x
+}
+A<-LDmat(t(y.1),typ="haplotype")
+A[upper.tri(A)]<-NA
+k<-as.matrix(as.dist(as.matrix(A), upper = TRUE))
+return(k)
+}
+
+#######RE
+#if(i==1){
+#x.r=x[-i,]
+#R=w-i
+
+#}
+#if(i==nrow(x)){
+#x.l.w=x[,]
+#}
+#if(i!=1 && i!=nrow(x)){
+#x.r=
+#x.l.w=
+#}
+########ld weight
+
+score.ld.w <- function(target,train,match.score=1, miss.score=0.5, mismatch.score=-5){
+ m=length(target)
+ score<-c()
+ for(i in 1:m){
+ n.i.allmiss <- sum((train[i,]=="N") & (target[i]=="N"))
+ n.i.match <- sum(target[i]==train[i,]) - n.i.allmiss
+ n.i.miss <- sum(target[i]=="N")+sum(train[i,]=="N")- n.i.allmiss
+ n.i.mismatch <- 1 - n.i.match -n.i.miss
+ w<-w.target[i]
+ i.score <- w*(match.score*n.i.match + miss.score*n.i.miss + mismatch.score*n.i.mismatch)
+ score<-score+i.score
+ }
+ return(score)
+}
+
+####
+
+od<-function(w){
+a<-matrix(data = NA, nrow = w, ncol = w)
+diag(a)<-0
+a<-apply(a,1,function(x){ff(x)})
+a[upper.tri(a)]<-NA
+a<-as.matrix(as.dist(as.matrix(a), upper = TRUE))
+return(a)
+}
+
+ff<-function(x){
+b<-which(x==0)
+d<-length(x)
+x<-c(c(1:d-b))
+return(x)
+}
+
+#####代刚计沮ノ戈だ
+
+data=read.delim(file.choose(),header=T)
+dim(data)
+zz = as.matrix(data[,12:ncol(data)])
+kk = as.matrix(data[,12:ncol(data)])
+
+n.count.col<-apply(y,2,function(x){gg(x)})
+n.count<-round(as.matrix(n.count.col)*(length(zz)/length(y)))
+data.p<-c()
+for(i in 1:ncol(zz))
+{
+n.count.i<-n.count[i,]
+cc<-sample(1:1390, size=n.count.i)
+zz[cc,i]<-"N"
+pp<-cbind(cc,rep(i,length(cc)))
+data.p<-rbind(data.p,pp)
+}
+y=zz
+sum(zz=="N")
+sum(final[data.p]==kk[data.p])/sum(zz=="N")
+
+sum(zz=="N")/length(zz)
+
+gg<-function(y){
+f<-sum(y=="N")
+return(f)
+}
+
+###### venn diagram 
+#op1<-data.p[final[data.p]==kk[data.p],]
+op2<-data.p[final[data.p]==kk[data.p],]
+dim(op1)
+dim(op2)
+count=0
+count_r=0
+for(i in 1:449){
+count<-sum((op1[op1[,2]==i,])[,1]%in%(op2[op2[,2]==i,])[,1])
+count_r=count_r+count
+}
+
+
+#####ъ疭翴
+#####玡疭ΤъㄢΩ
+da<-c()
+da_full<-c()
+for(i in 1:449){
+da<-(op2[op2[,2]==i,])[which(!(op2[op2[,2]==i,])[,1]%in%(op1[op1[,2]==i,])[,1]),]
+da_full<-rbind(da_full,da)
+}
+
+da<-c()
+da_full<-c()
+for(i in 1:449){
+da<-(op1[op1[,2]==i,])[which(!(op1[op1[,2]==i,])[,1]%in%(op2[op2[,2]==i,])[,1]),]
+da_full<-rbind(da_full,da)
+}
+
